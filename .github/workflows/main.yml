@@ -25,4 +25,20 @@ jobs:
       run: pip install -r requirements.txt
 
     - name: Run tests
-      run: pytest
+      id: test
+      run: |
+        pytest
+        echo "::set-output name=pytest-passed::$(if [[ $? -eq 0 ]]; then echo "true"; else echo "false"; fi)"
+
+    - name: Check test results
+      run: |
+        if [[ "${{ steps.test.outputs.pytest-passed }}" == "false" ]]; then
+          echo "Tests failed, aborting push."
+          exit 1
+        fi
+
+    - name: Push changes
+      if: success()
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
